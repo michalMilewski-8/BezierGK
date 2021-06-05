@@ -1,0 +1,167 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <FxCompile Include="kaczorPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="kaczorVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ps.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="texturePS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="textureVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="vs.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="bezierVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="bezierPS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="bezierDS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="bezierHS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="camera.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="DDSTextureLoader.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="diDeviceBase.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="diInstance.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="dxApplication.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="dxDevice.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="dxStructures.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="exceptions.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="keyboard.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="mesh.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="mouse.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="robot.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="vertexTypes.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="WICTextrueLoader.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="window.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="windowApplication.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="windowApplication.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="window.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="WICTextureLoader.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="vertexTypes.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="robot.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ptr_vector.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="mouse.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="mesh.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="keyboard.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="exceptions.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="dxStructures.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="dxptr.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="dxDevice.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="dxApplication.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="diptr.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="diInstance.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="diDeviceBase.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="DDSTextureLoader.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="compressed_pair.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="clock.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="camera.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{a8ec9049-7857-4e8b-8721-29ba307501ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{4ddffbaa-c9ed-4dc6-ab9e-911e1bb83b42}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="headers">
+      <UniqueIdentifier>{e79303fa-6807-4ff5-a5e5-a392d535053d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
