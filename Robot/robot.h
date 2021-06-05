@@ -35,6 +35,12 @@ namespace mini::gk2
 
 		explicit Robot(HINSTANCE hInstance);
 
+		bool show_lines{false};
+		bool show_second_type{false};
+		bool is_solid{false};
+		bool is_textured{ false };
+		float set_divisions{ 1.0f };
+
 	protected:
 		void Update(const Clock& dt) override;
 		void Render() override;
@@ -88,6 +94,9 @@ namespace mini::gk2
 		//Shader's constant buffer containing surface color
 		dx_ptr<ID3D11Buffer> m_cbSurfaceColor;
 		//ConstantBuffer<DirectX::XMFLOAT4> m_cbSurfaceColor;
+		dx_ptr<ID3D11Buffer> m_cbdivisions;
+		//ConstantBuffer<DirectX::XMFLOAT4> m_cbSurfaceColor;
+
 
 		dx_ptr<ID3D11SamplerState> m_sampler;
 
@@ -108,6 +117,9 @@ namespace mini::gk2
 		Mesh m_duck;
 
 		Mesh m_patch;
+		Mesh m_patch2;
+		Mesh m_patch2_lines;
+		Mesh m_patch_lines;
 
 		//Depth stencil state used for drawing billboards without writing to the depth buffer
 		dx_ptr<ID3D11DepthStencilState> m_dssNoDepthWrite;
@@ -142,11 +154,9 @@ namespace mini::gk2
 		DirectX::XMFLOAT3 kaczorPosition;
 		DirectX::XMFLOAT3 kaczorDirection;
 
-		dx_ptr<ID3D11ShaderResourceView> m_waterTexture;
-		dx_ptr<ID3D11ShaderResourceView> m_cubeTexture;
-		dx_ptr<ID3D11ShaderResourceView> m_kaczorTexture;
-		dx_ptr<ID3D11Texture2D> waterTex;
-		dx_ptr<ID3D11SamplerState> m_samplerTex;
+		dx_ptr<ID3D11ShaderResourceView> m_heightTexture;
+		dx_ptr<ID3D11ShaderResourceView> m_normalTexture;
+		dx_ptr<ID3D11ShaderResourceView> m_colorTexture;
 
 		// wodne te
 		dx_ptr<ID3D11VertexShader> m_textureVS;
@@ -161,7 +171,9 @@ namespace mini::gk2
 		//bezierowe shadery
 		dx_ptr<ID3D11VertexShader> m_bezierVS;
 		dx_ptr<ID3D11PixelShader> m_bezierPS;
+		dx_ptr<ID3D11PixelShader> m_bezierTexPS;
 		dx_ptr<ID3D11DomainShader> m_bezierDS;
+		dx_ptr<ID3D11DomainShader> m_bezierTexDS;
 		dx_ptr<ID3D11HullShader> m_bezierHS;
 		dx_ptr<ID3D11InputLayout> m_bezierIL;
 
@@ -189,6 +201,7 @@ namespace mini::gk2
 		void CreateKaczorMtx();
 		void DrawKaczor();
 		void DrawBezier();
+		bool HandleKeyboard();
 
 		void GenerateHeightMap();
 
@@ -201,6 +214,7 @@ namespace mini::gk2
 			const dx_ptr<ID3D11HullShader>& hs, const dx_ptr<ID3D11DomainShader>& ds,
 			const dx_ptr<ID3D11InputLayout>& il);
 		void SetTextures(std::initializer_list<ID3D11ShaderResourceView*> resList, const dx_ptr<ID3D11SamplerState>& sampler);
+		void SetTexturesDS(std::initializer_list<ID3D11ShaderResourceView*> resList, const dx_ptr<ID3D11SamplerState>& sampler);
 		
 	};
 }

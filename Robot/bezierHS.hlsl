@@ -7,6 +7,7 @@ struct VS_CONTROL_POINT_OUTPUT
 struct HS_CONTROL_POINT_OUTPUT
 {
 	float3 vPosition : WORLDPOS;
+	float2 tex : TEXTURECOORD;
 };
 
 struct HS_CONSTANT_DATA_OUTPUT
@@ -14,7 +15,7 @@ struct HS_CONSTANT_DATA_OUTPUT
 	float EdgeTessFactor[4]			: SV_TessFactor;
 	float InsideTessFactor[2]			: SV_InsideTessFactor;
 	float z_val[4] : ZVAL;
-	float2 tex[4] : TEXTURECOORD;
+	
 };
 
 #define NUM_CONTROL_POINTS 16
@@ -35,8 +36,13 @@ cbuffer cbProj : register(b2) //Vertex Shader constant buffer slot 2 - matches s
 	matrix projMatrix;
 };
 
+cbuffer cbdivisions : register(b3) //Pixel Shader constant buffer slot 0 - matches slot in psBilboard.hlsl
+{
+	float4 divisions;
+}
+
 float factor(float z) {
-	return -16.0f * log10(z * 0.1);
+	return divisions .x*-16.0f * log10(z * 0.1);
 }
 
 HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants(
@@ -74,10 +80,6 @@ HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants(
 	Output.z_val[2] = mul(viewMatrix, rightPoint).z;
 	Output.z_val[3] = mul(viewMatrix, upPoint).z;
 
-	Output.tex[0] = ip[0].normal.xy;
-	Output.tex[1] = ip[3].normal.xy;
-	Output.tex[2] = ip[12].normal.xy;
-	Output.tex[3] = ip[15].normal.xy;
 	return Output;
 }
 
@@ -94,6 +96,7 @@ HS_CONTROL_POINT_OUTPUT main(
 	HS_CONTROL_POINT_OUTPUT Output;
 
 	Output.vPosition = ip[i].vPosition.xyz;
+	Output.tex = ip[i].normal.xy;
 
 	return Output;
 }

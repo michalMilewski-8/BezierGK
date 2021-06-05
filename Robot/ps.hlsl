@@ -31,33 +31,35 @@ struct PSInput
 	float clip : SV_ClipDistance0;
 };
 
-sampler samp : register(s0);
-textureCUBE envMap : register(t0);
+//sampler samp : register(s0);
+//textureCUBE envMap : register(t0);
 
 float4 main(PSInput i) : SV_TARGET
 {
-	float3 V = normalize(i.view);
-	float3 N = normalize(i.norm);
-	//float3 col = lighting.ambient.xyz * lighting.surface.x;
-	float3 col = envMap.Sample(samp, i.tex).rgb;
-	col = pow(col, 0.4545f);
-	return float4(col,1.0f);
-	float specAlpha = 0.0f;
-	for (int k = 0; k < 3; ++k)
-	{
-		Light li = lighting.lights[k];
-		if (li.color.w != 0)
-		{
-			float3 L = normalize(li.position.xyz - i.worldPos);
-			float3 H = normalize(V + L);
-			col += li.color.xyz * surfaceColor.xyz * lighting.surface.y * clamp(dot(N, L), 0.0f, 1.0f);
-			float nh = dot(N, H);
-			nh = clamp(nh, 0.0f, 1.0f);
-			nh = pow(nh, lighting.surface.w);
-			specAlpha += nh;
-			col += li.color.xyz * nh;
-		}
-	}
+	//float3 V = normalize(i.view);
+	//float3 N = normalize(i.norm);
+	////float3 col = lighting.ambient.xyz * lighting.surface.x;
+	//float3 col = envMap.Sample(samp, i.tex).rgb;
+	//col = pow(col, 0.4545f);
+	//return float4(col,1.0f);
+	//float specAlpha = 0.0f;
+	//for (int k = 0; k < 3; ++k)
+	//{
+	//	Light li = lighting.lights[k];
+	//	if (li.color.w != 0)
+	//	{
+	//		float3 L = normalize(li.position.xyz - i.worldPos);
+	//		float3 H = normalize(V + L);
+	//		col += li.color.xyz * surfaceColor.xyz * lighting.surface.y * clamp(dot(N, L), 0.0f, 1.0f);
+	//		float nh = dot(N, H);
+	//		nh = clamp(nh, 0.0f, 1.0f);
+	//		nh = pow(nh, lighting.surface.w);
+	//		specAlpha += nh;
+	//		col += li.color.xyz * nh;
+	//	}
+	//}
 
-	return saturate(float4(col, surfaceColor.w + specAlpha));
+	//return saturate(float4(col, surfaceColor.w + specAlpha));
+
+	return float4(0.8f,0,0,1);
 }

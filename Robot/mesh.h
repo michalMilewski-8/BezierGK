@@ -130,11 +130,12 @@ namespace mini
 		
 		static Mesh Rectangle(const DxDevice& device, float width = 1.0f, float height = 1.0f) { return SimpleTriMesh(device, RectangleVerts(width, height), RectangleIdxs()); }
 
-		static std::vector<VertexPositionNormal> BezierVerts(int width_patches, int height_patches);
+		static std::vector<VertexPositionNormal> BezierVerts(int width_patches, int height_patches, int type);
 		static std::vector<unsigned short> BezierIdxs(int width_patches, int height_patches);
+		static std::vector<unsigned short> BezierIdxsL(int width_patches, int height_patches);
 
-		static Mesh Bezier(const DxDevice& device, int width = 1, int height = 1) { return SimpleTriMesh(device, BezierVerts(width, height), BezierIdxs(width, height), D3D_PRIMITIVE_TOPOLOGY_16_CONTROL_POINT_PATCHLIST); }
-
+		static Mesh Bezier(const DxDevice& device, int width = 1, int height = 1, int type = 0) { return SimpleTriMesh(device, BezierVerts(width, height, type), BezierIdxs(width, height), D3D_PRIMITIVE_TOPOLOGY_16_CONTROL_POINT_PATCHLIST); }
+		static Mesh BezierLines(const DxDevice& device, int width = 1, int height = 1, int type = 0) { return SimpleTriMesh(device, BezierVerts(width, height, type), BezierIdxsL(width, height), D3D_PRIMITIVE_TOPOLOGY_LINELIST); }
 		//Shadow Box
 		static Mesh ShadowBox(const DxDevice& device, Mesh& source, DirectX::XMFLOAT4 lightPosition, DirectX::XMFLOAT4X4 world);
 

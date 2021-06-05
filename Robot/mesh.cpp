@@ -310,7 +310,7 @@ std::vector<unsigned short> mini::Mesh::RectangleIdxs()
 	};
 }
 
-std::vector<VertexPositionNormal> mini::Mesh::BezierVerts(int width_patches, int height_patches)
+std::vector<VertexPositionNormal> mini::Mesh::BezierVerts(int width_patches, int height_patches, int type)
 {
 	float stridex = 2.0f / (width_patches + 2);
 	float stridez = 2.0f / (height_patches + 2);
@@ -322,7 +322,10 @@ std::vector<VertexPositionNormal> mini::Mesh::BezierVerts(int width_patches, int
 
 	for (int i = 0; i < width_patches + 3; i++) {
 		for (int j = 0; j < height_patches + 3; j++) {
-			verts.push_back({ {startx + stridex * i,((rand()%10)/10.0f)-0.5f,startz + stridez * j},{(startx + stridex * i + 1.0f)/2.0f,(startz + stridez * j + 1.0f)/2.0f,0}});
+			float y_val = 0;
+			if (type == 0 &&(i == 2 || i == 5)) y_val = 0.2f; 
+			if(type == 1 && i %2 ==0 && j % 2 == 0 && i != 0 && j !=0 && i != width_patches + 2 && j != height_patches + 2) y_val = 0.5f;
+			verts.push_back({ {startx + stridex * i,/*((rand()%10)/10.0f)-0.5f*/y_val,startz + stridez * j},{(startx + stridex * i + 1.0f)/2.0f,(startz + stridez * j + 1.0f)/2.0f,0}});
 		}
 	}
 	return verts;
@@ -354,6 +357,26 @@ std::vector<unsigned short> mini::Mesh::BezierIdxs(int width_patches, int height
 			patches.push_back((height_patches + 3) * (i + 3) + j + 1);
 			patches.push_back((height_patches + 3) * (i + 3) + j + 2);
 			patches.push_back((height_patches + 3) * (i + 3) + j + 3);
+		}
+	}
+	return patches;
+}
+
+std::vector<unsigned short> mini::Mesh::BezierIdxsL(int width_patches, int height_patches)
+{
+	auto patches = std::vector<unsigned short>();
+	for (int i = 0; i < width_patches + 3; i++) {
+
+		for (int j = 0; j < height_patches + 3; j++) {
+			if (j + 1 < height_patches+3) {
+				patches.push_back((height_patches + 3) * i + j);
+				patches.push_back((height_patches + 3) * i + j+1);
+			}
+
+			if (i + 1 < width_patches+3) {
+				patches.push_back((height_patches + 3) * i + j);
+				patches.push_back((height_patches + 3) * (i+1) + j);
+			}
 		}
 	}
 	return patches;

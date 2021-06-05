@@ -35,7 +35,8 @@ Robot::Robot(HINSTANCE hInstance)
 	m_cbWorld(m_device.CreateConstantBuffer<XMFLOAT4X4>()),
 	m_cbView(m_device.CreateConstantBuffer<XMFLOAT4X4, 2>()),
 	m_cbLighting(m_device.CreateConstantBuffer<Lighting>()),
-	m_cbSurfaceColor(m_device.CreateConstantBuffer<XMFLOAT4>())
+	m_cbSurfaceColor(m_device.CreateConstantBuffer<XMFLOAT4>()),
+	m_cbdivisions(m_device.CreateConstantBuffer<XMFLOAT4>())
 {
 	//Projection matrix
 	auto s = m_window.getClientSize();
@@ -44,11 +45,10 @@ Robot::Robot(HINSTANCE hInstance)
 	XMStoreFloat4x4(&m_projMtx, XMMatrixPerspectiveFovLH(XM_PIDIV4, ar, 0.01f, 100.0f));
 	m_cbProj = m_device.CreateConstantBuffer<XMFLOAT4X4>();
 	UpdateBuffer(m_cbProj, m_projMtx);
-
 	XMFLOAT4X4 cameraMtx;
 	XMStoreFloat4x4(&cameraMtx, m_camera.getViewMatrix());
 	UpdateCameraCB(cameraMtx);
-
+	UpdateBuffer(m_cbdivisions, XMFLOAT4(set_divisions,0,0,0));
 	//Sampler States
 	SamplerDescription sd;
 	sd.Filter = D3D11_FILTER_ANISOTROPIC;
@@ -86,9 +86,15 @@ Robot::Robot(HINSTANCE hInstance)
 	auto hsCode = m_device.LoadByteCode(L"bezierHS.cso");
 	m_bezierVS = m_device.CreateVertexShader(vsCode);
 	m_bezierPS = m_device.CreatePixelShader(psCode);
+	m_bezierPS = m_device.CreatePixelShader(psCode);
 	m_bezierHS = m_device.CreateHullShader(hsCode);
 	m_bezierDS = m_device.CreateDomainShader(dsCode);
 	m_bezierIL = m_device.CreateInputLayout(VertexPositionNormalTex::Layout, vsCode);
+
+	psCode = m_device.LoadByteCode(L"bezierTexPS.cso");
+	dsCode = m_device.LoadByteCode(L"bezierTexDS.cso");
+	m_bezierTexPS = m_device.CreatePixelShader(psCode);
+	m_bezierTexDS = m_device.CreateDomainShader(dsCode);
 
 	RasterizerDescription rsDesc;
 	rsDesc.CullMode = D3D11_CULL_NONE;
@@ -106,62 +112,23 @@ Robot::Robot(HINSTANCE hInstance)
 	m_duck = Mesh::LoadMesh(m_device, L"resources/duck/duck.txt");
 
 	m_patch = Mesh::Bezier(m_device,4,4);
+	m_patch_lines = Mesh::BezierLines(m_device,4,4);
+	m_patch2 = Mesh::Bezier(m_device,4,4,1);
+	m_patch2_lines = Mesh::BezierLines(m_device, 4, 4,1);
 
 	SetShaders();
 	ID3D11Buffer* vsb[] = { m_cbWorld.get(),  m_cbView.get(), m_cbProj.get() };
 	m_device.context()->VSSetConstantBuffers(0, 3, vsb);
 	ID3D11Buffer* dsb[] = { m_cbWorld.get(),  m_cbView.get(), m_cbProj.get() };
 	m_device.context()->DSSetConstantBuffers(0, 3, dsb);
-	ID3D11Buffer* hsb[] = { m_cbWorld.get(),  m_cbView.get(), m_cbProj.get() };
-	m_device.context()->HSSetConstantBuffers(0, 3, hsb);
+	ID3D11Buffer* hsb[] = { m_cbWorld.get(),  m_cbView.get(), m_cbProj.get(), m_cbdivisions.get() };
+	m_device.context()->HSSetConstantBuffers(0, 4, hsb);
 	ID3D11Buffer* psb[] = { m_cbSurfaceColor.get(), m_cbLighting.get() };
 	m_device.context()->PSSetConstantBuffers(0, 2, psb);
 
-	CreateSheetMtx();
-	CreateWallsMtx();
-
-	d = vector<vector<float>>(Nsize);
-	heightMap = vector<vector<float>>(Nsize);
-	heightMapOld = vector<vector<float>>(Nsize);
-	normalMap = vector<BYTE>(arraySize);
-
-	for (int i = 0; i < Nsize; i++) {
-		d[i] = vector<float>(Nsize);
-		heightMap[i] = vector<float>(Nsize);
-		heightMapOld[i] = vector<float>(Nsize);
-		for (int j = 0; j < Nsize; j++) {
-			heightMap[i][j] = 0.0f;
-			heightMapOld[i][j] = 0.0f;
-
-			float scaledi = (((i / (float)(Nsize - 1)) * 2.0f) - 1.0f);
-			float scaledj = (((j / (float)(Nsize - 1)) * 2.0f) - 1.0f);
-			XMFLOAT2 curr = { scaledi ,scaledj };
-			float l = min(abs(1.0f - curr.x), min(abs(curr.x + 1.0f), min(abs(1.0f - curr.y), abs(curr.y + 1.0f))));
-			l *= 5.0f;
-			d[i][j] = 0.95f * min(1.0f, l);
-		}
-	}
-
-	for (int i = 0; i < NumberOfRandomCheckPoints; i++) {
-		deBoorPoints.push_back(XMFLOAT3(-0.9f + (0.0019f * (rand() % 1000)), SHEET_POS.y, -0.9f + (0.0019f * (rand() % 1000))));
-		T.push_back(i-1);
-	}
-	kaczordt = 3.0f;
-	deBoorPoints.push_back(deBoorPoints[0]);
-	T.push_back(NumberOfRandomCheckPoints -1);
-	deBoorPoints.push_back(deBoorPoints[1]);
-	T.push_back(NumberOfRandomCheckPoints);
-	deBoorPoints.push_back(deBoorPoints[2]);
-	T.push_back(NumberOfRandomCheckPoints +1);
-	KaczorowyDeBoor();
-
-	auto texDesc = Texture2DDescription(Nsize, Nsize);
-	texDesc.BindFlags |= D3D11_BIND_RENDER_TARGET;
-	texDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
-	waterTex = m_device.CreateTexture(texDesc);
-	m_waterTexture = m_device.CreateShaderResourceView(waterTex);
-	m_cubeTexture = m_device.CreateShaderResourceView(L"resources/textures/output_skybox2.dds");
-	m_kaczorTexture = m_device.CreateShaderResourceView(L"resources/duck/ducktex.jpg");
+	m_heightTexture = m_device.CreateShaderResourceView(L"resources/textures/height.dds");
+	m_normalTexture = m_device.CreateShaderResourceView(L"resources/textures/normals.dds");
+	m_colorTexture = m_device.CreateShaderResourceView(L"resources/textures/diffuse.dds");
 }
 
 void Robot::CreateRenderStates()
@@ -176,13 +143,20 @@ void Robot::Update(const Clock& c)
 {
 	Base::Update(c);
 	double dt = c.getFrameTime();
+	
 	if (HandleCameraInput(dt))
 	{
 		XMFLOAT4X4 cameraMtx;
 		XMStoreFloat4x4(&cameraMtx, m_camera.getViewMatrix());
 		UpdateCameraCB(cameraMtx);
 	}
+	if (HandleKeyboard()) {
+		UpdateBuffer(m_cbdivisions, XMFLOAT4(set_divisions, 0, 0, 0));
+	}
+	if (dt < 0.016)
+		Sleep(16 - (dt * 1000));
 }
+
 
 void Robot::UpdateCameraCB(DirectX::XMFLOAT4X4 cameraMtx)
 {
@@ -269,6 +243,13 @@ void Robot::SetTextures(std::initializer_list<ID3D11ShaderResourceView*> resList
 	m_device.context()->PSSetShaderResources(0, resList.size(), resList.begin());
 	auto s_ptr = sampler.get();
 	m_device.context()->PSSetSamplers(0, 1, &s_ptr);
+}
+
+void Robot::SetTexturesDS(std::initializer_list<ID3D11ShaderResourceView*> resList, const dx_ptr<ID3D11SamplerState>& sampler)
+{
+	m_device.context()->DSSetShaderResources(0, resList.size(), resList.begin());
+	auto s_ptr = sampler.get();
+	m_device.context()->DSSetSamplers(0, 1, &s_ptr);
 }
 
 void Robot::Set1Light(XMFLOAT4 poition)
@@ -368,8 +349,63 @@ void Robot::DrawSheet(bool colors)
 
 void Robot::DrawBezier()
 {
-	UpdateBuffer(m_cbWorld, XMMatrixScaling(1,1,1));
-	m_patch.Render(m_device.context());
+	
+}
+
+bool mini::gk2::Robot::HandleKeyboard()
+{
+	bool moved = false;
+	bool keyboard = true;
+	KeyboardState kstate;
+	if (!m_keyboard.GetState(kstate))
+		keyboard = false;
+	if (keyboard) {
+		if (kstate.isKeyDown(DIK_Z))// Z
+		{
+			show_lines = true;
+		}
+		if (kstate.isKeyDown(DIK_Z) && kstate.isKeyDown(DIK_LCONTROL))// Z
+		{
+			show_lines = false;
+		}
+		if (kstate.isKeyDown(DIK_X))// X
+		{
+			is_solid = true;
+		}
+		if (kstate.isKeyDown(DIK_X) && kstate.isKeyDown(DIK_LCONTROL))// X
+		{
+			is_solid = false;
+		}
+		if (kstate.isKeyDown(DIK_C))// C
+		{
+			show_second_type = true;
+		}
+		if (kstate.isKeyDown(DIK_C) && kstate.isKeyDown(DIK_LCONTROL))// C
+		{
+			show_second_type = false;
+		}
+		if (kstate.isKeyDown(DIK_T))// T
+		{
+			is_textured = true;
+		}
+		if (kstate.isKeyDown(DIK_T) && kstate.isKeyDown(DIK_LCONTROL))// T
+		{
+			is_textured = false;
+		}
+		if (kstate.isKeyDown(DIK_W))// W
+		{
+			set_divisions += 0.01f;
+			set_divisions > 3.0f ? set_divisions = 3.0f : set_divisions = set_divisions;
+			moved = true;
+		}
+		if (kstate.isKeyDown(DIK_S))// S
+		{
+			set_divisions -= 0.01f;
+			set_divisions < 0.1f ? set_divisions = 0.1f : set_divisions = set_divisions;
+			moved = true;
+		}
+	}
+	return moved;
 }
 
 void Robot::CreateSheetMtx()
@@ -380,72 +416,11 @@ void Robot::CreateSheetMtx()
 
 void Robot::GenerateHeightMap()
 {
-	auto dnorm = normalMap.data();
-
-	int u = (kaczorPosition.x + 1.0f) * 0.5f * (Nsize - 1);
-	int v = (kaczorPosition.z + 1.0f) * 0.5f * (Nsize - 1);
-	heightMapOld[u][v] = 0.25f;
-	constexpr float A = c * c * dt * dt / (h * h);
-	constexpr float B = 2 - 4 * A;
-	for (int i = 0; i < Nsize; i++) {
-		for (int j = 0; j < Nsize; j++) {
-			if (rand() % 100000 < 1 && rand() % 20 < 1)
-				heightMap[i][j] = 0.25f;
-			else {
-				float zip = 0.0f;
-				if (i > 0)
-					zip += heightMapOld[i - 1][j];
-				if (j > 0)
-					zip += heightMapOld[i][j - 1];
-				if (i < Nsize - 1)
-					zip += heightMapOld[i + 1][j];
-				if (j < Nsize - 1)
-					zip += heightMapOld[i][j + 1];
-
-				heightMap[i][j] = d[i][j] * (A * zip + B * heightMapOld[i][j] - heightMap[i][j]);
-
-			}
-
-			float zip = 0, zim = 0, zjp = 0, zjm = 0;
-			if (i > 0)
-				zim = heightMapOld[i - 1][j];
-			if (j > 0)
-				zjm = heightMapOld[i][j - 1];
-			if (i < Nsize - 1)
-				zip = heightMapOld[i + 1][j];
-			if (j < Nsize - 1)
-				zjp = heightMapOld[i][j + 1];
-
-			float curr = heightMapOld[i][j];
-
-			XMVECTOR vecp = { 10,(zip - curr) / h, 0.0f };
-			XMVECTOR vecl = { -10,(zim - curr) / h , 0.0f };
-			XMVECTOR vecg = { 0.0f,(zjm - curr) / h , -10 };
-			XMVECTOR vecd = { 0.0f,(zjp - curr) / h, 10 };
-
-			auto res = XMVector3Cross(vecg, vecl);
-			auto res2 = XMVector3Cross(vecd, vecp);
-			auto normal = XMVector3Normalize(res + res2);
-
-			XMFLOAT3 normalny;
-			XMStoreFloat3(&normalny, normal);
-
-			*(dnorm++) = static_cast<BYTE>((normalny.x + 1.0f) / 2.0f * 255.0f);
-			*(dnorm++) = static_cast<BYTE>((normalny.y + 1.0f) / 2.0f * 255.0f);
-			*(dnorm++) = static_cast<BYTE>((normalny.z + 1.0f) / 2.0f * 255.0f);
-			*(dnorm++) = 255;
-		}
-	}
-
-	std::swap(heightMapOld, heightMap);
-
-	m_device.context()->UpdateSubresource(waterTex.get(), 0, nullptr, normalMap.data(), Nsize * pixelSize, arraySize);
-	m_device.context()->GenerateMips(m_waterTexture.get());
 }
 
 void Robot::DrawKaczor()
 {
-	UpdateBuffer(m_cbWorld, m_kaczorMtx);
+	UpdateBuffer (m_cbWorld, m_kaczorMtx);
 
 	m_duck.Render(m_device.context());
 }
@@ -459,10 +434,26 @@ void Robot::Render()
 	//SetTextures({ m_waterTexture.get(), m_cubeTexture.get() }, m_samplerWrap);
 	//UpdateBuffer(m_cbSurfaceColor, XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f));
 	//DrawSheet(true);
-	m_device.context()->RSSetState(m_rsCullNonWire.get());
-	SetShaders(m_bezierVS, m_bezierPS, m_bezierHS, m_bezierDS, m_bezierIL);
-	DrawBezier();
+	if(is_solid)
+		m_device.context()->RSSetState(m_rsCullNon.get());
+	else
+		m_device.context()->RSSetState(m_rsCullNonWire.get());
 
+	if (is_textured) {
+		SetShaders(m_bezierVS, m_bezierTexPS, m_bezierHS, m_bezierTexDS, m_bezierIL);
+		SetTexturesDS({ m_heightTexture.get() }, m_samplerWrap);
+		SetTextures({ m_colorTexture.get(), m_normalTexture.get() }, m_samplerWrap);
+	}
+	else {
+		SetShaders(m_bezierVS, m_bezierPS, m_bezierHS, m_bezierDS, m_bezierIL);
+	}
+	UpdateBuffer(m_cbWorld, XMMatrixScaling(1, 1, 1));
+
+	show_second_type? m_patch2.Render(m_device.context()) : m_patch.Render(m_device.context());
+	if (show_lines) {
+		SetShaders(m_vs, m_ps, m_il);
+		show_second_type ? m_patch2_lines.Render(m_device.context()) : m_patch_lines.Render(m_device.context());
+	}
 	//SetShaders(m_kaczorVS, m_kaczorPS, m_kaczorIL);
 	//SetTextures({ m_kaczorTexture.get() }, m_samplerWrap);
 	//CreateKaczorMtx();

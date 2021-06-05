@@ -1,3 +1,6 @@
+Texture2D heighMap : register(t0);
+SamplerState colorSampler : register(s0);
+
 struct DS_OUTPUT
 {
 	float4 vPosition  : SV_POSITION;
@@ -137,7 +140,7 @@ float3 TangentVec(float t, float3 B0_, float3 B1_, float3 B2_, float3 B3_) {
 
 	N3 = saved;
 
-	float3 f1 = 3.0f*((B1_ - B0_)/(T2-Tm1));
+	float3 f1 = 3.0f * ((B1_ - B0_) / (T2 - Tm1));
 	float3 f2 = 3.0f * ((B2_ - B1_) / (T3 - T0));
 	float3 f3 = 3.0f * ((B3_ - B2_) / (T4 - T1));
 
@@ -145,6 +148,14 @@ float3 TangentVec(float t, float3 B0_, float3 B1_, float3 B2_, float3 B3_) {
 }
 
 #define NUM_CONTROL_POINTS 16
+
+float factor(float z) {
+	return -16.0f * log10(z * 0.1);
+}
+
+float mipLevel(float z) {
+	return 6 - log2(factor(z));
+}
 
 [domain("quad")]
 DS_OUTPUT main(
@@ -181,25 +192,32 @@ DS_OUTPUT main(
 
 	float3 position = drawBrezier4(u, bu0, bu1, bu2, bu3);
 	Output.worldPos = position;
-	Output.vPosition = mul(viewMatrix,float4(position,1.0f));
-	Output.vPosition = mul(projMatrix,Output.vPosition);
 
-	float3 camPos = mul(invViewMatrix, float4(0.0f, 0.0f, 0.0f, 1.0f)).xyz;
-	Output.view = camPos - Output.worldPos;
+	
 
 	float3 bv0 = drawBrezier4(u, p00, p01, p02, p03);
 	float3 bv1 = drawBrezier4(u, p10, p11, p12, p13);
 	float3 bv2 = drawBrezier4(u, p20, p21, p22, p23);
 	float3 bv3 = drawBrezier4(u, p30, p31, p32, p33);
 
-	Output.tangent = normalize((TangentVec(u, bu0, bu1, bu2, bu3)+ TangentVec(v, bv0, bv1, bv2, bv3))/2.0f);
-	Output.binormal = normalize(cross( float3(0.0f, 1.0f, 0.0f), Output.tangent ));
+	Output.tangent = normalize((TangentVec(u, bu0, bu1, bu2, bu3) + TangentVec(v, bv0, bv1, bv2, bv3)) / 2.0f);
+	Output.binormal = normalize(cross(float3(0.0f, 1.0f, 0.0f), Output.tangent));
 	Output.normal = normalize(cross(Output.tangent, Output.binormal));
 	//Output.binormal = normalize(cross(Output.tangent, Output.normal));
 
 	Output.tex.x = patch[5].tex.x + (patch[9].tex.x - patch[5].tex.x) * domain.x;
 	Output.tex.y = patch[5].tex.y + (patch[6].tex.y - patch[5].tex.y) * domain.y;
 
+	float h = heighMap.SampleLevel(colorSampler, Output.tex, mipLevel(mul(viewMatrix, float4(position, 1.0f)).z)).x;
+	h *= 0.05f;
+
+	Output.worldPos = Output.worldPos + Output.normal * h;
+
+	float3 camPos = mul(invViewMatrix, float4(0.0f, 0.0f, 0.0f, 1.0f)).xyz;
+	Output.view = camPos - Output.worldPos;
+
+	Output.vPosition = mul(viewMatrix, float4(Output.worldPos, 1.0f));
+	Output.vPosition = mul(projMatrix, Output.vPosition);
 	//Output.normal = float3(input.z_val[0], input.z_val[1], input.z_val[2]);
 	return Output;
 }
