@@ -34,5 +34,5 @@ float4 main(DS_OUTPUT i) : SV_TARGET
 	col += lightColor.xyz * nh;
 
 	return saturate(float4(col,1.0f));
-	return float4((normalize(i.worldPos) + 1.0f) / 2.0f, 1.0f);
+	return float4(((i.normal /10.0f) + 1.0f) / 2.0f, 1.0f);
 }

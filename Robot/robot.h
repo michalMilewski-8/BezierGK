@@ -166,6 +166,7 @@ namespace mini::gk2
 		dx_ptr<ID3D11InputLayout> m_bezierIL;
 
 		dx_ptr<ID3D11RasterizerState> m_rsCullNon;
+		dx_ptr<ID3D11RasterizerState> m_rsCullNonWire;
 #pragma endregion
 
 #pragma region Matrices

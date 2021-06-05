@@ -92,8 +92,11 @@ Robot::Robot(HINSTANCE hInstance)
 
 	RasterizerDescription rsDesc;
 	rsDesc.CullMode = D3D11_CULL_NONE;
-	rsDesc.FillMode = D3D11_FILL_WIREFRAME;
+	rsDesc.FillMode = D3D11_FILL_SOLID;
 	m_rsCullNon = m_device.CreateRasterizerState(rsDesc);
+
+	rsDesc.FillMode = D3D11_FILL_WIREFRAME;
+	m_rsCullNonWire = m_device.CreateRasterizerState(rsDesc);
 
 	//Render states
 	CreateRenderStates();
@@ -456,7 +459,7 @@ void Robot::Render()
 	//SetTextures({ m_waterTexture.get(), m_cubeTexture.get() }, m_samplerWrap);
 	//UpdateBuffer(m_cbSurfaceColor, XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f));
 	//DrawSheet(true);
-	m_device.context()->RSSetState(m_rsCullNon.get());
+	m_device.context()->RSSetState(m_rsCullNonWire.get());
 	SetShaders(m_bezierVS, m_bezierPS, m_bezierHS, m_bezierDS, m_bezierIL);
 	DrawBezier();
 

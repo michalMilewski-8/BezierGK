@@ -13,7 +13,7 @@ struct HS_CONSTANT_DATA_OUTPUT
 {
 	float EdgeTessFactor[4]			: SV_TessFactor;
 	float InsideTessFactor[2]			: SV_InsideTessFactor;
-
+	float z_val[4] : ZVAL;
 	float2 tex[4] : TEXTURECOORD;
 };
 
@@ -36,7 +36,7 @@ cbuffer cbProj : register(b2) //Vertex Shader constant buffer slot 2 - matches s
 };
 
 float factor(float z) {
-	return 0.5f*-16.0f * log10(z * 0.01);
+	return -16.0f * log10(z * 0.1);
 }
 
 HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants(
@@ -61,9 +61,18 @@ HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants(
 	Output.EdgeTessFactor[3] = factor(mul(viewMatrix, downPoint).z);
 	Output.EdgeTessFactor[2] = factor(mul(viewMatrix, rightPoint).z);
 	Output.EdgeTessFactor[1] = factor(mul(viewMatrix, upPoint).z);
+	Output.EdgeTessFactor[0] = Output.EdgeTessFactor[0] < 3 ? 3 : Output.EdgeTessFactor[0];
+	Output.EdgeTessFactor[1] = Output.EdgeTessFactor[1] < 3 ? 3 : Output.EdgeTessFactor[1];
+	Output.EdgeTessFactor[2] = Output.EdgeTessFactor[2] < 3 ? 3 : Output.EdgeTessFactor[2];
+	Output.EdgeTessFactor[3] = Output.EdgeTessFactor[3] < 3 ? 3 : Output.EdgeTessFactor[3];
+	
 	Output.InsideTessFactor[0] = Output.EdgeTessFactor[0] + (Output.EdgeTessFactor[2] - Output.EdgeTessFactor[0]) / 2.0f;
 	Output.InsideTessFactor[1] = Output.EdgeTessFactor[1] + (Output.EdgeTessFactor[3] - Output.EdgeTessFactor[1]) / 2.0f;
 
+	Output.z_val[0] = mul(viewMatrix, leftPoint).z;
+	Output.z_val[1] = mul(viewMatrix, downPoint).z;
+	Output.z_val[2] = mul(viewMatrix, rightPoint).z;
+	Output.z_val[3] = mul(viewMatrix, upPoint).z;
 
 	Output.tex[0] = ip[0].normal.xy;
 	Output.tex[1] = ip[3].normal.xy;

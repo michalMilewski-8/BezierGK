@@ -18,7 +18,7 @@ struct HS_CONSTANT_DATA_OUTPUT
 {
 	float EdgeTessFactor[4]			: SV_TessFactor;
 	float InsideTessFactor[2]			: SV_InsideTessFactor;
-
+	float z_val[4] : ZVAL;
 	float2 tex[4] : TEXTURECOORD;
 };
 
@@ -199,5 +199,7 @@ DS_OUTPUT main(
 
 	Output.tex.x = input.tex[0].x + (input.tex[1].x - input.tex[0].x) * domain.x;
 	Output.tex.y = input.tex[0].y + (input.tex[2].y - input.tex[0].y) * domain.y;
+
+	//Output.normal = float3(input.z_val[0], input.z_val[1], input.z_val[2]);
 	return Output;
 }
